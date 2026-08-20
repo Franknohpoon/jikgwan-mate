@@ -17,6 +17,7 @@
 import { Redis } from '@upstash/redis';
 import { nanoid } from 'nanoid';
 import type { TeamCode } from './teams';
+import type { SeasonData } from './dynamicRelationship';
 import { MAX_FRIENDS } from './mapConfig';
 
 const ROOM_TTL_SECONDS = 60 * 60 * 24 * 7; // 7일
@@ -111,4 +112,20 @@ export async function joinRoom(
 
   await redis.set(roomKey(room.id), room, { ex: ROOM_TTL_SECONDS });
   return { room, friend };
+}
+
+// ─── 시즌 데이터 (순위표 + 상대전적) ─────────────────────────────────
+// 순위표는 매일, 상대전적은 주 1회 갱신. 각각 updatedAt을 별도 기록한다.
+// TTL 없음 — 시즌이 끝나면 관리자가 새 시즌 데이터로 덮어쓴다.
+
+const SEASON_KEY = 'season:data';
+
+export async function saveSeasonData(data: SeasonData): Promise<void> {
+  const redis = getRedis();
+  await redis.set(SEASON_KEY, data);
+}
+
+export async function getSeasonData(): Promise<SeasonData | null> {
+  const redis = getRedis();
+  return redis.get<SeasonData>(SEASON_KEY);
 }

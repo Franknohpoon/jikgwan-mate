@@ -129,7 +129,7 @@ describe('getTeamRelationship', () => {
     expect(result.name).toBe('수인선 시리즈');
   });
 
-  it('나머지 25쌍은 dynamic_pending을 반환한다', () => {
+  it('seasonData 없이 호출하면 나머지 25쌍은 dynamic_pending을 반환한다', () => {
     const covered = new Set(
       [...FIXED_PAIRS, ...HEUNGCHAMDONG_ONLY_PAIRS].map(([a, b]) => [a, b].sort().join('__'))
     );
@@ -139,7 +139,7 @@ describe('getTeamRelationship', () => {
     expect(rest.length).toBe(25);
 
     for (const [a, b] of rest) {
-      const result = getTeamRelationship(a, b);
+      const result = getTeamRelationship(a, b); // seasonData 생략
       if (isSameTeamError(result)) throw new Error(`${a}-${b}가 같은 팀으로 취급됨`);
       expect(result.type).toBe('dynamic_pending');
       expect(result.tier).toBeNull();
@@ -147,7 +147,44 @@ describe('getTeamRelationship', () => {
     }
   });
 
-  it('1차 구현 커버리지는 20/45쌍이다', () => {
+  it('seasonData를 전달하면 동적 쌍은 dynamic 타입을 반환한다', () => {
+    const seasonData = {
+      standings: {
+        entries: [
+          { team: 'KT' as const, rank: 1 },
+          { team: '삼성' as const, rank: 2 },
+          { team: 'LG' as const, rank: 3 },
+          { team: 'KIA' as const, rank: 4 },
+          { team: '두산' as const, rank: 5 },
+          { team: '한화' as const, rank: 6 },
+          { team: 'NC' as const, rank: 7 },
+          { team: '롯데' as const, rank: 8 },
+          { team: 'SSG' as const, rank: 9 },
+          { team: '키움' as const, rank: 10 },
+        ],
+        updatedAt: '2026-08-20',
+      },
+      headToHead: {
+        entries: [
+          { teamA: 'KT' as const, teamB: '삼성' as const, wins: 3, draws: 0, losses: 8 },
+        ],
+        updatedAt: '2026-08-18',
+      },
+    };
+
+    // KT-삼성: 시즌 데이터가 있으므로 dynamic
+    const result = getTeamRelationship('KT', '삼성', seasonData);
+    if (isSameTeamError(result)) throw new Error('unexpected same-team');
+    expect(result.type).toBe('dynamic');
+    expect(result.chemistry_score).toBe(90); // 압도적(75) + 둘다top5(15)
+
+    // 고정 라이벌은 seasonData가 있어도 fixed_rivalry 우선
+    const fixed = getTeamRelationship('LG', '두산', seasonData);
+    if (isSameTeamError(fixed)) throw new Error('unexpected same-team');
+    expect(fixed.type).toBe('fixed_rivalry');
+  });
+
+  it('고정 커버리지는 20/45쌍이다', () => {
     const total = allPairs(TEAMS).length;
     const coveredCount = FIXED_RIVALRIES.size + HEUNGCHAMDONG_PAIRS.size;
     expect(total).toBe(45);

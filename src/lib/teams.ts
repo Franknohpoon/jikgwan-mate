@@ -1,14 +1,20 @@
 /**
- * KBO 팀 매칭 로직 — 1차 스펙 (고정 관계 데이터)
+ * KBO 팀 매칭 로직
  *
  * factpepe-v3의 teamRelationships.mjs를 TypeScript로 이식.
- * 고정 관계(역사적/지역적 라이벌)만 우선 구현. 동적 관계(순위/상대전적
- * 등 시즌 데이터 기반)는 2차 작업에서 getTeamRelationship()의 3순위
- * 로직으로 추가될 예정 — 지금은 "dynamic_pending" 플레이스홀더만 반환한다.
  *
- * 전체 45쌍(10팀 조합) 중 1차 구현 커버리지: 20쌍 (고정 라이벌 16 + 흥참동
- * 전용 4). 나머지 25쌍은 2차 작업 전까지 dynamic_pending으로 처리된다.
+ * 관계 판정 우선순위:
+ *  1. 고정 라이벌 (FIXED_RIVALRIES, 16쌍)
+ *  2. 흥참동 (HEUNGCHAMDONG_PAIRS, 4쌍)
+ *  3. 동적 관계 — 시즌 데이터(순위표+상대전적)가 있으면 자동 계산 (25쌍)
+ *  4. 데이터 없으면 dynamic_pending 플레이스홀더
+ *
+ * 전체 45쌍(10팀 조합) 중 고정 커버리지 20쌍 + 동적 25쌍 = 45쌍 완전 커버.
  */
+
+import { calculateDynamicRelationship, type SeasonData } from './dynamicRelationship';
+
+export type { SeasonData } from './dynamicRelationship';
 
 // ─── 팀 코드 ─────────────────────────────────────────────────────────
 
@@ -31,7 +37,7 @@ export const TEAM_REGION: Record<TeamCode, string> = {
 
 // ─── 관계 타입 ───────────────────────────────────────────────────────
 
-export type RelationshipType = 'fixed_rivalry' | 'heungchamdong' | 'dynamic_pending';
+export type RelationshipType = 'fixed_rivalry' | 'heungchamdong' | 'dynamic' | 'dynamic_pending';
 export type RelationshipTier = 'S' | 'A' | 'B' | 'C' | null;
 
 export interface TeamRelationship {
@@ -62,7 +68,7 @@ interface RivalryEntry {
 // TS/JS에는 frozenset이 없으므로, 두 팀명을 정렬해 이어붙인 문자열을
 // Map의 키로 사용해 "A-B == B-A"를 보장한다.
 
-function pairKey(teamA: string, teamB: string): string {
+export function pairKey(teamA: string, teamB: string): string {
   return [teamA, teamB].sort().join('__');
 }
 
@@ -275,15 +281,25 @@ const HEUNGCHAMDONG_LIST: RivalryEntry[] = [
 
 export const HEUNGCHAMDONG_PAIRS = buildPairMap(HEUNGCHAMDONG_LIST);
 
-// ─── 매칭 함수 (1차 버전 — 고정 관계만) ─────────────────────────────
+// ─── 매칭 함수 ──────────────────────────────────────────────────────
 
 /**
  * 두 팀 간의 관계를 반환.
- * 1차 버전: 고정 관계(FIXED_RIVALRIES)와 흥참동(HEUNGCHAMDONG_PAIRS)만 처리.
- * 동적 관계(순위/상대전적 기반)는 2차 작업에서 이 함수에 3순위 로직으로
- * 추가될 예정 — 그 전까지는 "dynamic_pending"을 반환한다.
+ *
+ * 판정 우선순위:
+ *  1순위 — 고정 라이벌 (FIXED_RIVALRIES, 16쌍)
+ *  2순위 — 흥참동 (HEUNGCHAMDONG_PAIRS, 4쌍)
+ *  3순위 — 동적 관계 (시즌 데이터 기반, 25쌍) — seasonData가 있을 때만
+ *  폴백 — dynamic_pending (데이터 미입력 시)
+ *
+ * @param seasonData 시즌 데이터(순위표+상대전적). 전달하면 동적 25쌍도 계산.
+ *                   생략하면 동적 쌍은 "관계 분석 예정" 플레이스홀더를 반환.
  */
-export function getTeamRelationship(teamA: TeamCode, teamB: TeamCode): TeamRelationship | SameTeamError {
+export function getTeamRelationship(
+  teamA: TeamCode,
+  teamB: TeamCode,
+  seasonData?: SeasonData | null,
+): TeamRelationship | SameTeamError {
   if (teamA === teamB) {
     return { error: '같은 팀입니다' };
   }
@@ -318,10 +334,13 @@ export function getTeamRelationship(teamA: TeamCode, teamB: TeamCode): TeamRelat
     };
   }
 
-  // 3순위: 동적 관계 (2차 작업 예정 — 현재는 플레이스홀더)
-  // TODO(2차): 순위 라이벌 / 격차 관계 / 동병상련 / 우승 후보 매치업 /
-  //            상대전적 우위 / 물고 물리는 사이 등을 시즌 데이터 기반으로
-  //            여기에 추가.
+  // 3순위: 동적 관계 — 시즌 데이터가 있으면 자동 계산
+  if (seasonData) {
+    const dynamic = calculateDynamicRelationship(teamA, teamB, seasonData);
+    if (dynamic) return dynamic;
+  }
+
+  // 폴백: 시즌 데이터 미입력
   return {
     type: 'dynamic_pending',
     name: '관계 분석 예정',

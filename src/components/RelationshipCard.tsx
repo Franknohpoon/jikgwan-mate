@@ -23,6 +23,7 @@ export default function RelationshipCard({ ownerTeam, friend, relationship }: Re
   const ownerColor = teamColor(ownerTeam);
   const friendColor = teamColor(friend.team);
   const isPending = relationship.type === 'dynamic_pending';
+  const isDynamic = relationship.type === 'dynamic';
   const tierStyle = relationship.tier ? TIER_STYLE[relationship.tier] : null;
 
   return (
@@ -47,6 +48,17 @@ export default function RelationshipCard({ ownerTeam, friend, relationship }: Re
             style={{ background: tierStyle.bg }}
           >
             {tierStyle.label}
+          </span>
+        )}
+        {isDynamic && relationship.chemistry_score > 0 && (
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+            style={{
+              background: relationship.chemistry_score >= 75 ? 'var(--accent-red)' : 'var(--accent-gold)',
+              color: '#000',
+            }}
+          >
+            케미 {relationship.chemistry_score}
           </span>
         )}
       </div>

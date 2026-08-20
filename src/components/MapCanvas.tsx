@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react';
-import type { TeamCode } from '@/lib/teams';
+import type { TeamCode, SeasonData } from '@/lib/teams';
 import { getTeamRelationship, isSameTeamError } from '@/lib/teams';
 import { teamColor } from '@/lib/teamColors';
 import { RADIAL_VIEW_MAX } from '@/lib/mapConfig';
@@ -15,6 +15,7 @@ export interface FriendEntry {
 interface MapCanvasProps {
   ownerTeam: TeamCode;
   friends: FriendEntry[];
+  seasonData?: SeasonData | null;
 }
 
 export type SortMode = 'recent'; // 추후 'tier' 등 추가 여지를 남겨둔 유니언 타입
@@ -83,7 +84,7 @@ function RadialDiagram({
   );
 }
 
-const MapCanvas = forwardRef<HTMLDivElement, MapCanvasProps>(({ ownerTeam, friends }, ref) => {
+const MapCanvas = forwardRef<HTMLDivElement, MapCanvasProps>(({ ownerTeam, friends, seasonData }, ref) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const isRadial = friends.length <= RADIAL_VIEW_MAX;
   const sorted = sortFriends(friends, 'recent');
@@ -112,7 +113,7 @@ const MapCanvas = forwardRef<HTMLDivElement, MapCanvasProps>(({ ownerTeam, frien
       ) : (
         <div className="space-y-3">
           {sorted.map((friend) => {
-            const relationship = getTeamRelationship(ownerTeam, friend.team);
+            const relationship = getTeamRelationship(ownerTeam, friend.team, seasonData);
             if (isSameTeamError(relationship)) return null;
             return (
               <div key={friend.id} id={`friend-${friend.id}`}>

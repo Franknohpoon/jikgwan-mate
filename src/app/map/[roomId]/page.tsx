@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { toPng } from 'html-to-image';
 import ShareButtons from '@/components/ShareButtons';
 import MapCanvas from '@/components/MapCanvas';
-import type { TeamCode } from '@/lib/teams';
+import type { TeamCode, SeasonData } from '@/lib/teams';
 import { MAX_FRIENDS } from '@/lib/mapConfig';
 
 interface Friend {
@@ -30,9 +30,18 @@ const POLL_INTERVAL_MS = 5000;
 export default function MapPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const [room, setRoom] = useState<Room | null>(null);
+  const [seasonData, setSeasonData] = useState<SeasonData | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // 시즌 데이터 1회 로드
+  useEffect(() => {
+    fetch('/api/season', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((json) => { if (json.data) setSeasonData(json.data); })
+      .catch(() => {}); // 실패 시 고정 관계만 표시
+  }, []);
 
   const fetchRoom = useCallback(async () => {
     try {
@@ -106,7 +115,7 @@ export default function MapPage() {
         />
       </div>
 
-      <MapCanvas ref={cardRef} ownerTeam={room.ownerTeam} friends={room.friends} />
+      <MapCanvas ref={cardRef} ownerTeam={room.ownerTeam} friends={room.friends} seasonData={seasonData} />
 
       <button
         onClick={handleDownload}

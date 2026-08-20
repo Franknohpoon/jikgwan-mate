@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import TeamGridPicker from '@/components/TeamGridPicker';
 import RelationshipCard from '@/components/RelationshipCard';
-import { getTeamRelationship, isSameTeamError, type TeamCode, type TeamRelationship } from '@/lib/teams';
+import { getTeamRelationship, isSameTeamError, type TeamCode, type TeamRelationship, type SeasonData } from '@/lib/teams';
 import { NICKNAME_MAX_LENGTH } from '@/lib/mapConfig';
 
 interface Friend {
@@ -29,6 +29,15 @@ export default function JoinPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [registered, setRegistered] = useState<Friend | null>(null);
+  const [seasonData, setSeasonData] = useState<SeasonData | null>(null);
+
+  // 시즌 데이터 1회 로드
+  useEffect(() => {
+    fetch('/api/season', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((json) => { if (json.data) setSeasonData(json.data); })
+      .catch(() => {});
+  }, []);
 
   const fetchRoom = useCallback(async () => {
     try {
@@ -89,7 +98,7 @@ export default function JoinPage() {
 
   // 등록 완료 — 정원 대기 없이 바로 "방장 vs 나" 관계 결과를 보여준다.
   if (registered) {
-    const relationship: TeamRelationship | { error: string } = getTeamRelationship(room.ownerTeam, registered.team);
+    const relationship: TeamRelationship | { error: string } = getTeamRelationship(room.ownerTeam, registered.team, seasonData);
     return (
       <div className="flex flex-1 flex-col px-6 py-10 max-w-md mx-auto w-full gap-5">
         <div className="text-center space-y-1">
