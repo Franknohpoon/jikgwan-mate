@@ -23,7 +23,7 @@ export default function CreatePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '방 생성에 실패했습니다.');
-      router.push(`/share/${data.roomId}`);
+      router.push(`/map/${data.roomId}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : '방 생성에 실패했습니다.');
       setBusy(false);

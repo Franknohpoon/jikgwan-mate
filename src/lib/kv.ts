@@ -1,6 +1,9 @@
 /**
  * Room 저장소 — Upstash Redis(=Vercel의 새 KV 스토리지) REST 클라이언트.
  *
+ * "나 중심 지도" 모델: 방장(ownerTeam) 한 명 + 친구(friends) 목록. 친구끼리의
+ * 관계는 계산하지 않고, 항상 "방장 vs 친구 1명"만 다룬다.
+ *
  * Vercel 대시보드에서 KV/Redis 스토어를 프로젝트에 연결하면 아래 두 env var
  * 조합 중 하나가 자동으로 채워진다(연동 방식에 따라 이름이 다를 수 있어
  * 둘 다 지원):
@@ -14,23 +17,22 @@
 import { Redis } from '@upstash/redis';
 import { nanoid } from 'nanoid';
 import type { TeamCode } from './teams';
+import { MAX_FRIENDS } from './mapConfig';
 
 const ROOM_TTL_SECONDS = 60 * 60 * 24 * 7; // 7일
-export const MIN_PARTICIPANTS = 2;
-export const MAX_PARTICIPANTS = 8;
 
-export interface Participant {
+export interface Friend {
   id: string;
   team: TeamCode;
-  isHost: boolean;
+  nickname: string;
   joinedAt: number;
 }
 
 export interface Room {
   id: string;
-  minParticipants: number;
-  maxParticipants: number;
-  participants: Participant[];
+  ownerTeam: TeamCode;
+  friends: Friend[];
+  maxFriends: number;
   createdAt: number;
 }
 
@@ -67,18 +69,18 @@ export class RoomNotFoundError extends Error {
 
 export class RoomFullError extends Error {
   constructor() {
-    super('이미 정원이 가득 찼습니다.');
+    super(`이미 정원(${MAX_FRIENDS}명)이 가득 찼습니다.`);
     this.name = 'RoomFullError';
   }
 }
 
-export async function createRoom(hostTeam: TeamCode): Promise<Room> {
+export async function createRoom(ownerTeam: TeamCode): Promise<Room> {
   const redis = getRedis();
   const room: Room = {
     id: nanoid(8),
-    minParticipants: MIN_PARTICIPANTS,
-    maxParticipants: MAX_PARTICIPANTS,
-    participants: [{ id: nanoid(8), team: hostTeam, isHost: true, joinedAt: Date.now() }],
+    ownerTeam,
+    friends: [],
+    maxFriends: MAX_FRIENDS,
     createdAt: Date.now(),
   };
   await redis.set(roomKey(room.id), room, { ex: ROOM_TTL_SECONDS });
@@ -92,17 +94,21 @@ export async function getRoom(roomId: string): Promise<Room> {
   return room;
 }
 
-export async function joinRoom(roomId: string, team: TeamCode): Promise<Room> {
+export async function joinRoom(
+  roomId: string,
+  input: { team: TeamCode; nickname: string }
+): Promise<{ room: Room; friend: Friend }> {
   const redis = getRedis();
   const room = await getRoom(roomId);
 
-  if (room.participants.length >= room.maxParticipants) {
+  if (room.friends.length >= room.maxFriends) {
     throw new RoomFullError();
   }
 
-  const participant: Participant = { id: nanoid(8), team, isHost: false, joinedAt: Date.now() };
-  room.participants.push(participant);
+  // 중복 참여(동일인이 다른 닉네임으로 여러 번 등록)는 스펙상 허용 — 별도 검증 없음.
+  const friend: Friend = { id: nanoid(8), team: input.team, nickname: input.nickname, joinedAt: Date.now() };
+  room.friends.push(friend);
 
   await redis.set(roomKey(room.id), room, { ex: ROOM_TTL_SECONDS });
-  return room;
+  return { room, friend };
 }

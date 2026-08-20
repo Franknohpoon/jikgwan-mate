@@ -1,9 +1,14 @@
 import type { TeamCode, TeamRelationship } from '@/lib/teams';
 import { teamColor } from '@/lib/teamColors';
 
+interface FriendView {
+  team: TeamCode;
+  nickname: string;
+}
+
 interface RelationshipCardProps {
-  teamA: TeamCode;
-  teamB: TeamCode;
+  ownerTeam: TeamCode;
+  friend: FriendView;
   relationship: TeamRelationship;
 }
 
@@ -14,9 +19,9 @@ const TIER_STYLE: Record<string, { bg: string; label: string }> = {
   C: { bg: '#8b8b9e', label: 'C급 동맹' },
 };
 
-export default function RelationshipCard({ teamA, teamB, relationship }: RelationshipCardProps) {
-  const colorA = teamColor(teamA);
-  const colorB = teamColor(teamB);
+export default function RelationshipCard({ ownerTeam, friend, relationship }: RelationshipCardProps) {
+  const ownerColor = teamColor(ownerTeam);
+  const friendColor = teamColor(friend.team);
   const isPending = relationship.type === 'dynamic_pending';
   const tierStyle = relationship.tier ? TIER_STYLE[relationship.tier] : null;
 
@@ -24,15 +29,17 @@ export default function RelationshipCard({ teamA, teamB, relationship }: Relatio
     <div
       className="rounded-2xl border p-4 space-y-2.5"
       style={{
-        borderColor: isPending ? 'var(--border)' : `${colorA}40`,
+        borderColor: isPending ? 'var(--border)' : `${ownerColor}40`,
         background: 'var(--surface)',
       }}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-sm font-black">
-          <span style={{ color: colorA }}>{teamA}</span>
+          <span style={{ color: ownerColor }}>{ownerTeam}</span>
           <span className="text-muted font-normal">vs</span>
-          <span style={{ color: colorB }}>{teamB}</span>
+          <span style={{ color: friendColor }}>
+            {friend.nickname} <span className="text-muted font-normal">({friend.team})</span>
+          </span>
         </div>
         {tierStyle && (
           <span
