@@ -4,9 +4,9 @@
  * 실행: npx vitest run
  *
  * 확인 대상:
- * - 14개 고정 라이벌 쌍이 정확히 매칭되는지 (양방향)
- * - 5개 흥참동 쌍이 정확히 매칭되는지 (양방향)
- * - 나머지 26쌍(45 - 19)은 "dynamic_pending"이 반환되는지
+ * - 16개 고정 라이벌 쌍이 정확히 매칭되는지 (양방향)
+ * - 4개 흥참동 쌍이 정확히 매칭되는지 (양방향)
+ * - 나머지 25쌍(45 - 20)은 "dynamic_pending"이 반환되는지
  * - 같은 팀 조합, TEAMS/TEAM_REGION 정합성
  */
 
@@ -36,10 +36,11 @@ const FIXED_PAIRS: [TeamCode, TeamCode][] = [
   ['KT', 'SSG'],
   ['두산', 'KIA'],
   ['두산', 'SSG'],
+  ['KIA', 'LG'],  // 신규: 이름 없는 앙숙
+  ['키움', 'SSG'], // 흥참동에서 승격: 1호선 시리즈
 ];
 
 const HEUNGCHAMDONG_ONLY_PAIRS: [TeamCode, TeamCode][] = [
-  ['SSG', '키움'],
   ['SSG', 'NC'],
   ['키움', 'NC'],
   ['키움', 'KT'],
@@ -84,16 +85,16 @@ describe('getTeamRelationship', () => {
     }
   });
 
-  it('FIXED_RIVALRIES는 정확히 14쌍을 담는다', () => {
-    expect(FIXED_RIVALRIES.size).toBe(14);
+  it('FIXED_RIVALRIES는 정확히 16쌍을 담는다', () => {
+    expect(FIXED_RIVALRIES.size).toBe(16);
   });
 
-  it('HEUNGCHAMDONG_PAIRS는 정확히 5쌍을 담는다 (KT-SSG 제외)', () => {
-    expect(HEUNGCHAMDONG_PAIRS.size).toBe(5);
+  it('HEUNGCHAMDONG_PAIRS는 정확히 4쌍을 담는다 (KT-SSG·키움-SSG 제외)', () => {
+    expect(HEUNGCHAMDONG_PAIRS.size).toBe(4);
   });
 
-  it('14개 고정 라이벌 쌍이 fixed_rivalry로 정확히 매칭된다 (양방향)', () => {
-    expect(FIXED_PAIRS.length).toBe(14);
+  it('16개 고정 라이벌 쌍이 fixed_rivalry로 정확히 매칭된다 (양방향)', () => {
+    expect(FIXED_PAIRS.length).toBe(16);
     for (const [a, b] of FIXED_PAIRS) {
       const forward = getTeamRelationship(a, b);
       const backward = getTeamRelationship(b, a);
@@ -107,8 +108,8 @@ describe('getTeamRelationship', () => {
     }
   });
 
-  it('5개 흥참동 전용 쌍이 heungchamdong으로 정확히 매칭된다 (양방향)', () => {
-    expect(HEUNGCHAMDONG_ONLY_PAIRS.length).toBe(5);
+  it('4개 흥참동 전용 쌍이 heungchamdong으로 정확히 매칭된다 (양방향)', () => {
+    expect(HEUNGCHAMDONG_ONLY_PAIRS.length).toBe(4);
     for (const [a, b] of HEUNGCHAMDONG_ONLY_PAIRS) {
       const forward = getTeamRelationship(a, b);
       const backward = getTeamRelationship(b, a);
@@ -121,21 +122,21 @@ describe('getTeamRelationship', () => {
     }
   });
 
-  it('KT-SSG는 흥참동이 아니라 경인 라이벌(fixed_rivalry)로 매칭된다', () => {
+  it('KT-SSG는 흥참동이 아니라 수인선 시리즈(fixed_rivalry)로 매칭된다', () => {
     const result = getTeamRelationship('KT', 'SSG');
     if (isSameTeamError(result)) throw new Error('unexpected same-team error');
     expect(result.type).toBe('fixed_rivalry');
-    expect(result.name).toBe('경인 라이벌');
+    expect(result.name).toBe('수인선 시리즈');
   });
 
-  it('나머지 26쌍은 dynamic_pending을 반환한다', () => {
+  it('나머지 25쌍은 dynamic_pending을 반환한다', () => {
     const covered = new Set(
       [...FIXED_PAIRS, ...HEUNGCHAMDONG_ONLY_PAIRS].map(([a, b]) => [a, b].sort().join('__'))
     );
     const rest = allPairs(TEAMS).filter(([a, b]) => !covered.has([a, b].sort().join('__')));
 
-    expect(covered.size).toBe(19);
-    expect(rest.length).toBe(26);
+    expect(covered.size).toBe(20);
+    expect(rest.length).toBe(25);
 
     for (const [a, b] of rest) {
       const result = getTeamRelationship(a, b);
@@ -146,10 +147,10 @@ describe('getTeamRelationship', () => {
     }
   });
 
-  it('1차 구현 커버리지는 19/45쌍이다', () => {
+  it('1차 구현 커버리지는 20/45쌍이다', () => {
     const total = allPairs(TEAMS).length;
     const coveredCount = FIXED_RIVALRIES.size + HEUNGCHAMDONG_PAIRS.size;
     expect(total).toBe(45);
-    expect(coveredCount).toBe(19);
+    expect(coveredCount).toBe(20);
   });
 });
