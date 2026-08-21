@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import TeamGridPicker from '@/components/TeamGridPicker';
 import RelationshipCard from '@/components/RelationshipCard';
-import { getTeamRelationship, isSameTeamError, type TeamCode, type TeamRelationship, type SeasonData } from '@/lib/teams';
+import { getTeamRelationship, isSameTeamError, type TeamCode, type SeasonData } from '@/lib/teams';
 import { NICKNAME_MAX_LENGTH } from '@/lib/mapConfig';
 
 interface Friend {
@@ -96,43 +96,7 @@ export default function JoinPage() {
     );
   }
 
-  // 등록 완료 — 정원 대기 없이 바로 "방장 vs 나" 관계 결과를 보여준다.
-  if (registered) {
-    const relationship: TeamRelationship | { error: string } = getTeamRelationship(room.ownerTeam, registered.team, seasonData);
-    return (
-      <div className="flex flex-1 flex-col px-6 py-10 max-w-md mx-auto w-full gap-5">
-        <div className="text-center space-y-1">
-          <p className="text-muted text-xs font-bold tracking-wider">등록 완료!</p>
-          <h1 className="text-xl font-black">
-            {registered.nickname}님과 {room.ownerTeam}의 관계는?
-          </h1>
-        </div>
-
-        {!isSameTeamError(relationship) && (
-          <RelationshipCard ownerTeam={room.ownerTeam} friend={registered} relationship={relationship} />
-        )}
-
-        <div className="flex flex-col gap-2 pt-2">
-          <Link
-            href="/create"
-            className="w-full rounded-2xl py-3.5 font-black text-white text-center transition-all"
-            style={{ background: 'var(--accent-red)' }}
-          >
-            너도 네 지도 만들어봐 🐸
-          </Link>
-          <Link
-            href={`/map/${room.id}`}
-            className="w-full rounded-2xl py-3.5 font-black text-center border border-border"
-            style={{ background: 'var(--surface)' }}
-          >
-            지도 전체 보기
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const isFull = room.friends.length >= room.maxFriends;
+  const isFull = !registered && room.friends.length >= room.maxFriends;
 
   if (isFull) {
     return (
@@ -147,42 +111,80 @@ export default function JoinPage() {
     );
   }
 
+  const relationship = registered
+    ? getTeamRelationship(room.ownerTeam, registered.team, seasonData)
+    : null;
+
   return (
     <div className="flex flex-1 flex-col px-6 py-10 max-w-md mx-auto w-full">
-      <div className="mb-6 space-y-1.5 text-center">
-        <p className="text-muted text-xs font-bold tracking-wider">직관메이트 초대</p>
-        <h1 className="text-xl font-black">
-          {room.ownerTeam} 팬이 만든
-          <br />
-          직관메이트 지도에 참여해요
-        </h1>
-        <p className="text-muted text-sm">현재 {room.friends.length}명 참여중</p>
-      </div>
+      {!registered ? (
+        <>
+          <div className="mb-6 space-y-1.5 text-center">
+            <p className="text-muted text-xs font-bold tracking-wider">직관메이트 초대</p>
+            <h1 className="text-xl font-black">
+              {room.ownerTeam} 팬이 만든
+              <br />
+              직관메이트 지도에 참여해요
+            </h1>
+            <p className="text-muted text-sm">현재 {room.friends.length}명 참여중</p>
+          </div>
 
-      <p className="text-sm font-bold mb-2">닉네임</p>
-      <input
-        type="text"
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value.slice(0, NICKNAME_MAX_LENGTH))}
-        placeholder="닉네임을 입력해주세요"
-        maxLength={NICKNAME_MAX_LENGTH}
-        className="w-full rounded-xl border border-border px-3.5 py-2.5 mb-5 text-sm"
-        style={{ background: 'var(--surface)' }}
-      />
+          <p className="text-sm font-bold mb-2">닉네임</p>
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value.slice(0, NICKNAME_MAX_LENGTH))}
+            placeholder="닉네임을 입력해주세요"
+            maxLength={NICKNAME_MAX_LENGTH}
+            className="w-full rounded-xl border border-border px-3.5 py-2.5 mb-5 text-sm"
+            style={{ background: 'var(--surface)' }}
+          />
 
-      <p className="text-sm font-bold mb-2">내 응원팀은?</p>
-      <TeamGridPicker value={team} onChange={setTeam} />
+          <p className="text-sm font-bold mb-2">내 응원팀은?</p>
+          <TeamGridPicker value={team} onChange={setTeam} />
 
-      {error && <p className="text-accent-red text-sm mt-3">⚠️ {error}</p>}
+          {error && <p className="text-accent-red text-sm mt-3">⚠️ {error}</p>}
 
-      <button
-        onClick={handleSubmit}
-        disabled={!team || !nickname.trim() || busy}
-        className="mt-8 w-full rounded-2xl py-3.5 font-black text-white transition-all disabled:opacity-40"
-        style={{ background: 'var(--accent-red)' }}
-      >
-        {busy ? '참여하는 중…' : '참여 완료'}
-      </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!team || !nickname.trim() || busy}
+            className="mt-8 w-full rounded-2xl py-3.5 font-black text-white transition-all disabled:opacity-40"
+            style={{ background: 'var(--accent-red)' }}
+          >
+            {busy ? '참여하는 중…' : '참여 완료'}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="text-center space-y-1 mb-4">
+            <p className="text-muted text-xs font-bold tracking-wider">등록 완료!</p>
+            <h1 className="text-xl font-black">
+              {registered.nickname}님과 {room.ownerTeam}의 관계는?
+            </h1>
+          </div>
+
+          {relationship && !isSameTeamError(relationship) && (
+            <RelationshipCard ownerTeam={room.ownerTeam} friend={registered} relationship={relationship} />
+          )}
+
+          <div className="flex flex-col gap-2 pt-4">
+            <Link
+              href="/create"
+              className="w-full rounded-2xl py-3.5 font-black text-white text-center transition-all"
+              style={{ background: 'var(--accent-red)' }}
+            >
+              너도 네 지도 만들어봐 🐸
+            </Link>
+            <Link
+              href={`/map/${room.id}`}
+              className="w-full rounded-2xl py-3.5 font-black text-center border border-border"
+              style={{ background: 'var(--surface)' }}
+            >
+              지도 전체 보기
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }
