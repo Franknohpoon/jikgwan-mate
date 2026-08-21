@@ -42,10 +42,10 @@ function RadialDiagram({
   onSelect: (id: string) => void;
 }) {
   const n = friends.length;
-  const radiusPct = 38;
+  const radiusPct = 30;
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[280px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[300px]">
       {/* 중심: 방장 */}
       <div
         className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full text-xs font-black"
@@ -65,7 +65,7 @@ function RadialDiagram({
             key={friend.id}
             type="button"
             onClick={() => onSelect(friend.id)}
-            className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition-transform"
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center transition-transform"
             style={{
               left: `${left}%`,
               top: `${top}%`,
@@ -74,7 +74,7 @@ function RadialDiagram({
             title={`${friend.nickname} (${friend.team})`}
           >
             <span
-              className="flex h-11 w-11 flex-col items-center justify-center rounded-full text-[10px] font-black"
+              className="flex h-10 w-10 flex-col items-center justify-center rounded-full text-[10px] font-black shrink-0"
               style={{
                 background: `${teamColor(friend.team)}${selected ? '' : '33'}`,
                 color: selected ? '#0b0b12' : teamColor(friend.team),
@@ -84,7 +84,7 @@ function RadialDiagram({
               {friend.team}
             </span>
             <span
-              className="text-[9px] font-bold max-w-[60px] truncate text-center"
+              className="text-[9px] font-bold max-w-[56px] truncate text-center leading-tight mt-0.5"
               style={{ color: teamColor(friend.team) }}
             >
               {friend.nickname}
