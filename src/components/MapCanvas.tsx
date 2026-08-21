@@ -65,18 +65,30 @@ function RadialDiagram({
             key={friend.id}
             type="button"
             onClick={() => onSelect(friend.id)}
-            className="absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full text-[10px] font-black transition-transform"
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition-transform"
             style={{
               left: `${left}%`,
               top: `${top}%`,
-              background: `${teamColor(friend.team)}${selected ? '' : '33'}`,
-              color: selected ? '#0b0b12' : teamColor(friend.team),
-              boxShadow: selected ? `0 0 0 2px ${teamColor(friend.team)}` : 'none',
               transform: `translate(-50%, -50%) scale(${selected ? 1.1 : 1})`,
             }}
             title={`${friend.nickname} (${friend.team})`}
           >
-            {friend.team}
+            <span
+              className="flex h-11 w-11 flex-col items-center justify-center rounded-full text-[10px] font-black"
+              style={{
+                background: `${teamColor(friend.team)}${selected ? '' : '33'}`,
+                color: selected ? '#0b0b12' : teamColor(friend.team),
+                boxShadow: selected ? `0 0 0 2px ${teamColor(friend.team)}` : 'none',
+              }}
+            >
+              {friend.team}
+            </span>
+            <span
+              className="text-[9px] font-bold max-w-[60px] truncate text-center"
+              style={{ color: teamColor(friend.team) }}
+            >
+              {friend.nickname}
+            </span>
           </button>
         );
       })}
