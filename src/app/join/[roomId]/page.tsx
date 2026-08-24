@@ -169,6 +169,13 @@ export default function JoinPage() {
 
           <div className="flex flex-col gap-2 pt-4">
             <Link
+              href={`/result/${room.id}/${registered.id}`}
+              className="w-full rounded-2xl py-3.5 font-black text-white text-center transition-all"
+              style={{ background: 'var(--accent-gold)' }}
+            >
+              이 결과 공유하기 📤
+            </Link>
+            <Link
               href="/create"
               className="w-full rounded-2xl py-3.5 font-black text-white text-center transition-all"
               style={{ background: 'var(--accent-red)' }}

@@ -355,3 +355,37 @@ export function getTeamRelationship(
 export function isSameTeamError(result: TeamRelationship | SameTeamError): result is SameTeamError {
   return 'error' in result;
 }
+
+// ─── 동적 25쌍 유틸리티 ─────────────────────────────────────────────
+
+/** 동적 관계 대상 25쌍을 반환한다 (고정 라이벌 + 흥참동 제외). */
+export function getDynamicPairs(): [TeamCode, TeamCode][] {
+  const pairs: [TeamCode, TeamCode][] = [];
+  for (let i = 0; i < TEAMS.length; i++) {
+    for (let j = i + 1; j < TEAMS.length; j++) {
+      const key = pairKey(TEAMS[i], TEAMS[j]);
+      if (!FIXED_RIVALRIES.has(key) && !HEUNGCHAMDONG_PAIRS.has(key)) {
+        pairs.push([TEAMS[i], TEAMS[j]]);
+      }
+    }
+  }
+  return pairs;
+}
+
+/** 동적 25쌍을 시즌 데이터로 계산하고 케미지수 내림차순으로 정렬해 반환한다. */
+export function getAllDynamicRanking(
+  seasonData: SeasonData
+): { teamA: TeamCode; teamB: TeamCode; relationship: TeamRelationship }[] {
+  const pairs = getDynamicPairs();
+  const results: { teamA: TeamCode; teamB: TeamCode; relationship: TeamRelationship }[] = [];
+
+  for (const [a, b] of pairs) {
+    const rel = calculateDynamicRelationship(a, b, seasonData);
+    if (rel) {
+      results.push({ teamA: a, teamB: b, relationship: rel });
+    }
+  }
+
+  results.sort((a, b) => b.relationship.chemistry_score - a.relationship.chemistry_score);
+  return results;
+}
