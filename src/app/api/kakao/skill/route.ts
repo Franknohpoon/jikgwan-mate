@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { handleTeamCommand, readSkillRequest, textResponse } from '@/lib/kakaoProfile';
 import { createTeamStore } from '@/lib/kakaoStore';
+import { mentionSchema } from '@/lib/kakaoChemistry';
 
 export const runtime = 'nodejs';
 
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
   catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const input = readSkillRequest(body);
   if (!input) return Response.json({ error: 'Invalid skill request' }, { status: 400 });
+  if (/^멘션\s*확인(?:\s|$)/.test(input.utterance)) {
+    return Response.json(textResponse(mentionSchema(body)));
+  }
   try {
     return Response.json(await handleTeamCommand(input.userId, input.utterance, createTeamStore()));
   } catch {
