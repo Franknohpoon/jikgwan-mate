@@ -1,7 +1,10 @@
-import { describe,it,expect } from 'vitest';
-import {resultType,validateProfile,publicBoard,digest,validId,type Board} from './store';
+import { describe,it,expect,vi,afterEach } from 'vitest';
+import {redisConfig,resultType,validateProfile,publicBoard,digest,validId,type Board} from './store';
 import quiz from './quiz.json';
 describe('fan beta data boundaries',()=>{
+ afterEach(()=>vi.unstubAllEnvs());
+ it('prefers the connected beta credentials as a complete pair',()=>{vi.stubEnv('IKGWAN_BETA_KV_REST_API_URL','https://active.example');vi.stubEnv('IKGWAN_BETA_KV_REST_API_TOKEN','active-test');vi.stubEnv('JIKGWAN_KV_REST_API_URL','https://archived.example');vi.stubEnv('JIKGWAN_KV_REST_API_TOKEN','archived-test');expect(redisConfig()).toEqual({url:'https://active.example',token:'active-test'});});
+ it('never mixes a new URL with an old token',()=>{vi.stubEnv('IKGWAN_BETA_KV_REST_API_URL','https://active.example');vi.stubEnv('IKGWAN_BETA_KV_REST_API_TOKEN','');vi.stubEnv('JIKGWAN_KV_REST_API_TOKEN','old-test');expect(()=>redisConfig()).toThrow();});
  it('resolves every quiz path consistently and reaches all eight types',()=>{const counts=new Map<string,number>();for(let n=0;n<1024;n++){let rest=n;const answers=[];for(let q=0;q<5;q++){answers.push(rest%4);rest=Math.floor(rest/4)}const type=resultType(answers);expect(resultType(answers)).toBe(type);counts.set(type,(counts.get(type)??0)+1)}expect([...counts.values()]).toEqual(Array(8).fill(128));});
  it('rejects invalid and incomplete answers',()=>{for(const a of [[],null,[0,0,0,0],[0,0,0,0,9],[0,0,0,0,'1']])expect(()=>resultType(a)).toThrow()});
  it('requires explicit public consent, bounded nicknames and an actual team',()=>{for(const b of [{name:'a',team:'SSG'},{name:'<img>',team:'SSG',consent:true},{name:'a'.repeat(13),team:'SSG',consent:true},{name:'a',team:'fake',consent:true}])expect(()=>validateProfile(b,'A','hash')).toThrow();expect(validateProfile({name:' 으쓱이 ',team:'NONE',consent:true},'A','hash').name).toBe('으쓱이')});

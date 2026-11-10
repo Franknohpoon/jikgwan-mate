@@ -12,7 +12,7 @@ Entry `/play` (root redirects), opaque invite `/play?map={id}`, public map `/pla
 
 ## Storage and authority
 
-Redis keys `fan:v1:{production|preview}:board:{16-char-id}` are separate from legacy room/Kakao data. Existing JIKGWAN KV variables are preferred. No in-memory fallback in production.
+Redis keys `fan:v1:{production|preview}:board:{16-char-id}` are separate from legacy room/Kakao data. The active `IKGWAN_BETA_KV_REST_API_URL/TOKEN` pair is preferred, then the correctly spelled JIKGWAN_BETA pair, then legacy credentials. Partial pairs fail closed. Legacy room/Kakao stores retain their previous configuration. No in-memory fallback in production.
 
 Board contains owner, friends, quiz version, completion/activity/expiry times. Raw question answers are scored server-side and never persisted. Public API responses omit member/session and recovery hashes.
 
@@ -30,4 +30,4 @@ Optional isolated storage integration: install `fakeredis[lua]` in Python, then 
 
 ## Deployment gate
 
-2026-11-10: linked Upstash resource is **archived due to inactivity** (`uninstalled`), and production legacy read returns HTTP 500 `fetch failed`. Restore/reconnect an active database via Upstash/Vercel before public release. Verify a real create → independent browser join → refresh → delete cycle against that database. Do not treat local emulator checks as hosted storage verification.
+2026-11-10: a new Free Upstash store `jikgwan-mate-redis` is available in hnd1 and linked to Preview/Production with prefix IKGWAN_BETA. Fan beta now uses that complete pair. Archived legacy stores and their data remain untouched; their restoration is separate. Vercel functions are configured in Tokyo to match. Verify real hosted create → independent participant join → refresh → delete before release.

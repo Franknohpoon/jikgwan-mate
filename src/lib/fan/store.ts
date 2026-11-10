@@ -10,12 +10,19 @@ export class FanError extends Error { constructor(public status:number,message:s
 export const digest=(value:string)=>createHash('sha256').update(value).digest('hex');
 export const token=()=>randomBytes(32).toString('base64url');
 let client:Redis|undefined;
-export function redis(){
- const url=process.env.JIKGWAN_KV_REST_API_URL??process.env.KV_REST_API_URL??process.env.UPSTASH_REDIS_REST_URL;
- const auth=process.env.JIKGWAN_KV_REST_API_TOKEN??process.env.KV_REST_API_TOKEN??process.env.UPSTASH_REDIS_REST_TOKEN;
- if(!url||!auth)throw new FanError(503,'지도 저장소 연결을 준비 중이에요. 잠시 후 다시 시도해주세요.');
- return client??=new Redis({url,token:auth});
+export function redisConfig(){
+ const pairs=[
+  [process.env.IKGWAN_BETA_KV_REST_API_URL,process.env.IKGWAN_BETA_KV_REST_API_TOKEN],
+  [process.env.JIKGWAN_BETA_KV_REST_API_URL,process.env.JIKGWAN_BETA_KV_REST_API_TOKEN],
+  [process.env.JIKGWAN_KV_REST_API_URL,process.env.JIKGWAN_KV_REST_API_TOKEN],
+  [process.env.KV_REST_API_URL,process.env.KV_REST_API_TOKEN],
+  [process.env.UPSTASH_REDIS_REST_URL,process.env.UPSTASH_REDIS_REST_TOKEN],
+ ];
+ for(const [url,token] of pairs){if(url||token){if(!url||!token)throw new FanError(503,'지도 저장소 연결 정보를 확인 중이에요. 잠시 후 다시 시도해주세요.');return {url,token};}}
+ throw new FanError(503,'지도 저장소 연결을 준비 중이에요. 잠시 후 다시 시도해주세요.');
 }
+export function redis(){return client??=new Redis(redisConfig());}
+
 const ns=()=>`fan:v1:${process.env.VERCEL_ENV==='production'?'production':'preview'}`;
 export const boardKey=(id:string)=>`${ns()}:board:${id}`;
 export function validId(id:string){if(!/^[a-zA-Z0-9_-]{16}$/.test(id))throw new FanError(404,'지도를 찾을 수 없어요.');return id}
