@@ -10,3 +10,5 @@ describe('retained-map statistics',()=>{
   expect(s.maps).toBe(2);expect(s.activeMaps).toBe(1);expect(s.joins).toBe(2);expect(s.todayMaps).toBe(1);expect(s.todayJoins).toBe(1);expect(s.days).toHaveLength(14);expect(s.days.at(-1)).toEqual({date:'2026-11-11',maps:1,joins:1});expect(JSON.stringify(s)).not.toContain('friends');
  });
 });
+
+it('lists retained maps by participation without exposing profiles',()=>{const a={...board(now,[now]),id:'abcdefghijklmnop',owner:{name:'비공개'}},b={...board(now,[]),id:'qrstuvwxyzABCDEF'},expired={...board(now,[now],now-1),id:'1234567890123456'};const result=summarizeBoards([b,a,expired] as Board[],now);expect(result.perMap).toEqual([{id:a.id,createdAt:now,participants:1},{id:b.id,createdAt:now,participants:0}]);expect(JSON.stringify(result)).not.toContain('비공개')});
