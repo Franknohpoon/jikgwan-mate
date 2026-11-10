@@ -9,5 +9,16 @@ export async function GET(req:NextRequest){let name='야구 안 본다던 놈이
  if(id&&/^[\w-]{16}$/.test(id)){try{const b=await getBoard(id);name=b.owner.name+'의 야구판';line='너 들어오면 우리 조합 나옴 ㅋㅋ';label='5문항 풀고 합류 · 내 결과로 내 지도도 만들기';type=b.owner.type;}catch{}}
  else if(t){name=t.name;line=t.tag;label=t.line;type=t.id;}
  const old:Record<string,number>={A:0,C:1,G:2};const isOld=type in old;const src=isOld?'/fan/og-board.png':'/fan/og-'+type+'.png';const image=await readFile(join(process.cwd(),'public',src));const data='data:image/png;base64,'+image.toString('base64');const fonts=await (font??=readFile(join(process.cwd(),'public/fan/korean.woff')));
+ if(t&&(req.nextUrl.searchParams.get('card')==='1'||req.nextUrl.searchParams.get('download')==='1')){
+  return new ImageResponse(<div style={{width:'100%',height:'100%',display:'flex',flexDirection:'column',alignItems:'center',background:'#faf7ee',padding:'68px 70px',fontFamily:'FanKorean',color:'#19281f',textAlign:'center'}}>
+   <div style={{fontSize:26,color:'#23563c',letterSpacing:3}}>직관메이트 · 팬심 목격 보고서</div>
+   <div style={{fontSize:34,marginTop:32}}>내 야구팬 실체 들킴</div>
+   <div style={{fontSize:70,lineHeight:1.25,marginTop:22}}>{t.name}</div>
+   <div style={{display:'flex',width:600,height:isOld?510:442,position:'relative',overflow:'hidden',marginTop:34,marginBottom:28}}><img alt="" src={data} width={isOld?1800:600} height={isOld?1200:900} style={{position:'absolute',width:isOld?1800:600,height:isOld?1200:900,left:isOld?-old[type]*600:0,top:isOld?-317:-163}}/></div>
+   <div style={{fontSize:48,lineHeight:1.4}}>{`“${t.tag}”`}</div>
+   <div style={{fontSize:30,lineHeight:1.6,marginTop:22}}>{t.line}</div>
+   <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginTop:'auto',borderTop:'2px solid #d9dece',paddingTop:28,width:'100%',gap:12}}><div style={{fontSize:30,color:'#23563c'}}>너는 어떤 야구팬인데? 5문항으로 확인해봐.</div><div style={{fontSize:25,color:'#697064'}}>jikgwan-mate.vercel.app</div></div>
+  </div>,{width:1080,height:1350,fonts:[{name:'FanKorean',data:fonts,weight:700,style:'normal'}],headers:{'Cache-Control':'public, max-age=300',...(req.nextUrl.searchParams.get('download')==='1'?{'Content-Disposition':`attachment; filename="jikgwan-mate-${t.id}.png"`}:{})}});
+ }
  return new ImageResponse(<div style={{width:'100%',height:'100%',display:'flex',background:'#faf7ee',padding:'50px',fontFamily:'FanKorean',color:'#19281f',alignItems:'center',gap:'30px'}}><div style={{display:'flex',flexDirection:'column',width:660}}><div style={{fontSize:24,color:'#23563c',marginBottom:24}}>직관메이트 · 내 야구팬 실체 들킴</div><div style={{fontSize:58,lineHeight:1.3,wordBreak:'break-all'}}>{name}</div><div style={{fontSize:32,lineHeight:1.5,marginTop:24}}>{line}</div><div style={{fontSize:22,color:'#697064',marginTop:32}}>{label}</div></div><div style={{display:'flex',width:360,height:isOld?306:265,position:'relative',overflow:'hidden'}}>{/* Original illustration stays unchanged; frame excludes all embedded text. */}<img alt="" src={data} width={isOld?1080:360} height={isOld?720:540} style={{position:'absolute',width:isOld?1080:360,height:isOld?720:540,left:isOld?-old[type]*360:0,top:isOld?-190:-98}}/></div></div>,{width:1200,height:630,fonts:[{name:'FanKorean',data:fonts,weight:700,style:'normal'}],headers:{'Cache-Control':'public, max-age=300'}});
 }
