@@ -65,7 +65,7 @@ function characterArt(t,small=false){
 }
 function portrait(t){return `<div class="portrait">${characterArt(t)}</div>`}
 
-const TEAMS=[['SSG','SSG 랜더스','#b92740'],['LG','LG 트윈스','#ad1749'],['DOOSAN','두산 베어스','#263154'],['KIWOOM','키움 히어로즈','#8d2446'],['KT','케이티 위즈','#333333'],['HANWHA','한화 이글스','#d45d18'],['KIA','기아 타이거즈','#bd2638'],['SAMSUNG','삼성 라이온즈','#2059ad'],['LOTTE','롯데 자이언츠','#147b98'],['NC','NC 다이노스','#43607b'],['NONE','아직 응원팀 고르는 중','#778465']];
+const TEAMS=[['SSG','SSG 랜더스','#b92740'],['LG','LG 트윈스','#ad1749'],['DOOSAN','두산 베어스','#263154'],['KIWOOM','키움 히어로즈','#8d2446'],['KT','KT 위즈','#333333'],['HANWHA','한화 이글스','#d45d18'],['KIA','KIA 타이거즈','#bd2638'],['SAMSUNG','삼성 라이온즈','#2059ad'],['LOTTE','롯데 자이언츠','#147b98'],['NC','NC 다이노스','#43607b'],['NONE','아직 응원팀 고르는 중','#778465']];
 function teamInfo(code){return TEAMS.find(t=>t[0]===code)||TEAMS[10]}
 function teamTag(code){const t=teamInfo(code);return `<span class="teamtag" style="--team:${t[2]}"><i class="teamdot" aria-hidden="true"></i>${esc(t[0]==='NONE'?'응원팀 고르는 중':t[1])}</span>`}
 function teamSelect(value){return `<label for="team">응원팀 · 지도에 구단 색으로 표시돼요</label><select id="team"><option value="">응원팀을 골라줘</option>${TEAMS.map(t=>`<option value="${t[0]}" ${value===t[0]?'selected':''}>${esc(t[1])}</option>`).join('')}</select>`}
