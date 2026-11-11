@@ -265,7 +265,7 @@ function artSources(){return `<svg class="artsources" width="0" height="0" aria-
 function characterArt(t,small=false){
  const old={A:0,C:1,G:2}[t.id];let src,w,h,box;
  if(old!==undefined){src=ART;w=1536;h=1024;box=small?`${135+old*512} 795 270 229`:`${old*512+4} 270 500 435`;}
- else {src=CHARART[t.id];w=1024;h=1536;box=small?({B:'300 1135 440 401',D:'300 1150 440 386',E:'300 1185 440 351',F:'300 1180 440 356',H:'300 1170 440 366'}[t.id]):'0 280 1024 755';}
+ else {src=CHARART[t.id];w=1024;h=1536;box=small?({B:'300 1135 440 401',D:'300 1150 440 386',E:'300 1185 440 351',F:'300 1180 440 356',H:'300 1170 440 366'}[t.id]):(t.id==='B'?'0 280 1024 710':'0 280 1024 755');}
  if(!src)throw new Error('Missing character artwork: '+t.id);
  const [x,y,bw,bh]=box.split(' ').map(Number);const clip=`crop-${t.id}-${small?'avatar':'body'}`;
  return `<svg data-character-art="${t.id}" xmlns="http://www.w3.org/2000/svg" viewBox="${box}" role="img" aria-label="${esc(t.name)} 캐릭터" focusable="false" preserveAspectRatio="xMidYMid meet"><title>${esc(t.name)}</title><defs><clipPath id="${clip}" clipPathUnits="userSpaceOnUse"><rect x="${x}" y="${y}" width="${bw}" height="${bh}"/></clipPath></defs><g clip-path="url(#${clip})"><use href="#source-${old!==undefined?'board':t.id}"/></g></svg>`;
