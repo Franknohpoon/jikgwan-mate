@@ -3,7 +3,7 @@ const preview={home,board,createForm,invitePanel,friendJoined,choose,retentionIn
 let activeBoard=null,recoveryCode='',recoveryBoardId='',productionBusy=false,showDemo=false;
 const liveOrigin=location.origin;
 const INVITES=__INVITES__;
-function invitationMessage(){const t=DATA.types.find(t=>t.id===activeBoard.owner.type);return '나는 '+t.name+'래 ㅋㅋ\n'+INVITES[t.id].message+'\n너랑 무슨 조합인지 궁금해서 보냄.\n5문항 풀고 우리 관계 확인해봐.';}
+function invitationMessage(){const t=DATA.types.find(t=>t.id===activeBoard.owner.type);return '나는 '+t.name+' 유형이래 ㅋㅋ\n'+INVITES[t.id].message+'\n너랑 무슨 조합인지 궁금해서 보냄.\n5문항 풀고 우리 관계 확인해봐.';}
 async function api(path,body){const response=await fetch('/api/fan/boards'+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin',cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'연결을 확인해주세요.');return data;}
 function safeLocal(key,value){try{if(value===undefined)return localStorage.getItem(key);if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value)}catch{}return null}
 function loadLive(b){activeBoard=b;current=DATA.types.find(t=>t.id===b.owner.type);nickname=b.owner.name;ownerTeam=b.owner.team;friends=b.friends.map(f=>({id:f.type,name:f.name,team:f.team,serverId:f.id,example:false}));mapSelected=-1;boardView='map';inviteHost=null;guestProfile=null;showDemo=false;}
