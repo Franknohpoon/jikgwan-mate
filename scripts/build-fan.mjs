@@ -5,6 +5,6 @@ let page=read('src/lib/fan/source/template.html').replace('__DATA__',read('src/l
 page=page.replace('<title>내 야구판 — 직관메이트 디자인 시안</title>','<title>직관메이트 — 내 야구팬 실체 들킴</title>__META__');
 const script=page.match(/<script>([\s\S]*?)<\/script>/)[1];
 const boot=script.lastIndexOf('home();');
-writeFileSync('public/fan/app.js',script.slice(0,boot)+read('src/lib/fan/source/production.txt'));
+writeFileSync('public/fan/app.js',script.slice(0,boot)+read('src/lib/fan/source/production.txt').replace('__INVITES__',read('src/lib/fan/invites.json')));
 page=page.replace(/<script>[\s\S]*?<\/script>/,'<script src="/fan/app.js" defer></script><script type="module" src="/fan/analytics.js"></script>').replace('onclick="retentionInfo()">지도 보관 안내 ↗','onclick="myMap()">내 지도 ↗');
 writeFileSync('src/lib/fan/shell.ts','export const shell = '+JSON.stringify(page)+';\n');
